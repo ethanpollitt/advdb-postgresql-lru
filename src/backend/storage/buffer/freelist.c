@@ -25,7 +25,7 @@
 typedef struct
 {
 	/* NOT NEEDED !! Clock sweep hand: index of next buffer to consider grabbing */
-	//int			nextVictimBuffer;
+	int			nextVictimBuffer;
 
 	int			firstFreeBuffer;	/* Head of list of unused buffers */
 	int			lastFreeBuffer; /* Tail of list of unused buffers */
@@ -85,13 +85,19 @@ StrategyGetBuffer(void)
 		 * we got to it.)
 		 */
 		LockBufHdr(buf);
-		if (buf->refcount == 0 && buf->usage_count == 0)
-			return buf;
-		UnlockBufHdr(buf);
+		if (buf->refcount == 0 && buf->usage_count == 0) {
+			elog(LOG, "Get buf %d\n", buf->buf_id);	
+			return buf;	// leave buffer locked to return
+		}
+		UnlockBufHdr(buf);	// unlock buffer if not chosen to return
 	}
+		
+	// Should not reach this point!
+	elog(ERROR, "no unpinned buffers available");
+	return NULL;
 
 	/* Nothing on the freelist, so run the "clock sweep" algorithm */
-	trycounter = NBuffers;
+	/*trycounter = NBuffers;
 	for (;;)
 	{
 		buf = &BufferDescriptors[StrategyControl->nextVictimBuffer];
@@ -102,7 +108,7 @@ StrategyGetBuffer(void)
 		/*
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
 		 * it; decrement the usage_count and keep scanning.
-		 */
+		 *
 		LockBufHdr(buf);
 		if (buf->refcount == 0 && buf->usage_count == 0)
 			return buf;
@@ -119,15 +125,15 @@ StrategyGetBuffer(void)
 			 * We could hope that someone will free one eventually, but it's
 			 * probably better to fail than to risk getting stuck in an
 			 * infinite loop.
-			 */
+			 *
 			UnlockBufHdr(buf);
 			elog(ERROR, "no unpinned buffers available");
 		}
 		UnlockBufHdr(buf);
-	}
+	}*/
 
 	/* not reached */
-	return NULL;
+	//return NULL;
 }
 
 /*
