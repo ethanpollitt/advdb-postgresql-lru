@@ -1,3 +1,7 @@
+This version of PostgreSQL (8.2.19) has LRU buffer algorithm implemented.
+-------------------------------------------------------------------------
+
+
 PostgreSQL Database Management System
 =====================================
   
